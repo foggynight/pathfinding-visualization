@@ -86,8 +86,8 @@ function create_final_path(tile) {
 	path_final.reverse();
 }
 
-function pathfind_BFS(tile_start, tile_end) {
-    function start() {
+function default_start(tile_start, tile_end) {
+	return () => {
 		path_open.length = 0;
 		path_closed = Array(GRID_H).fill(0)
 			.map(_ => Array(GRID_W).fill(false));
@@ -101,18 +101,35 @@ function pathfind_BFS(tile_start, tile_end) {
 		path_open.push(new Node(tile_start, null));
 		const [ps_x, ps_y] = tile_start;
 		path_closed[ps_y][ps_x] = true;
-    }
+	}
+}
 
+function default_done() {
+	return path_final.length > 0;
+}
+
+function pathfind_BFS(tile_start, tile_end) {
     function step() {
 		const head = path_open.shift();
 		visit_unclosed_neighbors(head, tile_end);
     }
+    return [
+		default_start(tile_start, tile_end),
+		step,
+		default_done,
+	];
+}
 
-    function done() {
-		return path_final.length > 0;
+function pathfind_DFS(tile_start, tile_end) {
+    function step() {
+		const head = path_open.pop();
+		visit_unclosed_neighbors(head, tile_end);
     }
-
-    return [start, step, done];
+    return [
+		default_start(tile_start, tile_end),
+		step,
+		default_done,
+	];
 }
 
 // draw ------------------------------------------------------------------------
