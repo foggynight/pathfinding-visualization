@@ -13,17 +13,22 @@ const SLEEP_TIME = TARGET_FPS / 1000;
 const POINT_START = [24, 24];
 const POINT_END   = [36, 36];
 
+// Vec2 ------------------------------------------------------------------------
+
+function Vec2_eq(v1, v2) { return (v1[0] == v2[0]) && (v1[1] == v2[1]); }
+
 // grid ------------------------------------------------------------------------
 
 const TILE_WATER  = 0;
 const TILE_GROUND = 1;
 const TILE_WALL   = 2;
 
-const TILE_FINAL  = 3;
+const TILE_POINT  = 3;
 const TILE_OPEN   = 4;
 const TILE_CLOSED = 5;
+const TILE_FINAL  = 6;
 
-const TILE_COLORS = ["blue", "green", "grey", "red", "#FFFF00", "#AAAA00"];
+const TILE_COLORS = ["blue", "green", "grey", "red", "#FFFF00", "#AAAA00", "white"];
 function tile_color(val) { return TILE_COLORS[val]; }
 
 function tiles_load() {
@@ -42,53 +47,69 @@ function tiles_load() {
     return tiles;
 }
 
-function tile_neighbors(tile) {
-	const [tx, ty] = tile;
-	const neighbors = [];
-	if (tx > 0)          neighbors.push([tx - 1, ty]);
-	if (tx < GRID_W - 1) neighbors.push([tx + 1, ty]);
-	if (ty > 0)          neighbors.push([tx, ty - 1]);
-	if (ty < GRID_H - 1) neighbors.push([tx, ty + 1]);
-	return neighbors;
-}
-
 // pathfinding -----------------------------------------------------------------
 
-const path_open = [];
-let path_closed = [];
-const path_final = [];
-
-function close_point(point) {
-	const [px, py] = point;
-	path_closed[py][px] = true;
+class Node {
+	constructor(pos, parent = null) {
+		this.pos = pos;
+		this.parent = parent;
+	}
 }
 
-function pathfind_BFS(point_start, point_end) {
+const path_open = [];
+let path_closed;
+const path_final = [];
+
+function visit_unclosed_neighbors(tile, tile_end) {
+	function visit(x, y) {
+		const node = new Node([x, y], tile);
+		path_open.push(node);
+		path_closed[y][x] = true;
+		if (Vec2_eq([x, y], tile_end)) {
+			create_final_path(node);
+			return true;
+		}
+		return false;
+	}
+	const [tx, ty] = tile.pos;
+	if (tx > 0 && !path_closed[ty][tx-1])          { if (visit(tx - 1, ty)) return; }
+	if (tx < GRID_W - 1 && !path_closed[ty][tx+1]) { if (visit(tx + 1, ty)) return; }
+	if (ty > 0 && !path_closed[ty-1][tx])          { if (visit(tx, ty - 1)) return; }
+	if (ty < GRID_H - 1 && !path_closed[ty+1][tx]) { if (visit(tx, ty + 1)) return; }
+}
+
+function create_final_path(tile) {
+	while (tile !== null) {
+		path_final.push(tile);
+		tile = tile.parent;
+	}
+	path_final.reverse();
+}
+
+function pathfind_BFS(tile_start, tile_end) {
     function start() {
-		path_final.length = 0;
 		path_open.length = 0;
 		path_closed = Array(GRID_H).fill(0)
 			.map(_ => Array(GRID_W).fill(false));
+		path_final.length = 0;
 
-		path_open.push(point_start);
-		close_point(point_start);
+		if (Vec2_eq(tile_start, tile_end)) {
+			path_final.push(new Node(tile_start, null));
+			return;
+		}
+
+		path_open.push(new Node(tile_start, null));
+		const [ps_x, ps_y] = tile_start;
+		path_closed[ps_y][ps_x] = true;
     }
 
     function step() {
 		const head = path_open.shift();
-		const neighbors = tile_neighbors(head);
-		for (const neighbor of neighbors) {
-			const [nx, ny] = neighbor;
-			if (path_closed[ny][nx] == false) {
-				path_open.push([nx, ny]);
-				path_closed[ny][nx] = true;
-			}
-		}
+		visit_unclosed_neighbors(head, tile_end);
     }
 
     function done() {
-		const [px, py] = point_end;
-		return path_closed[py][px] == true;
+		return path_final.length > 0;
     }
 
     return [start, step, done];
@@ -142,7 +163,7 @@ function draw_tiles(tiles) {
     }
 }
 
-function draw_points(points, tile_val) {
+function draw_tile_arr(points, tile_val) {
     points.forEach(point => draw_tile(point[0], point[1], tile_val));
 }
 
@@ -154,11 +175,17 @@ function draw_path_open_closed() {
 			}
 		}
 	}
-	path_open.forEach(tile => draw_tile(tile[0], tile[1], TILE_OPEN));
+	path_open.forEach(tile => {
+		const [x, y] = tile.pos;
+		draw_tile(x, y, TILE_OPEN)
+	});
 }
 
 function draw_path_final() {
-	path_final.forEach(tile => TILE_FINAL);
+	path_final.forEach(tile => {
+		const [x, y] = tile.pos;
+		draw_tile(x, y, TILE_FINAL)
+	});
 }
 
 // main ------------------------------------------------------------------------
@@ -168,23 +195,23 @@ const start_end = [POINT_START, POINT_END];
 async function main() {
     const tiles = tiles_load();
     draw_tiles(tiles)
-    draw_points(start_end, TILE_FINAL);
+    draw_tile_arr(start_end, TILE_POINT);
 
     const [start, step, done] = pathfind_BFS(POINT_START, POINT_END);
 
     start();
     draw_path_open_closed();
-    draw_points(start_end, TILE_FINAL);
+    draw_tile_arr(start_end, TILE_POINT);
     while (!done()) {
         step();
 		draw_tiles(tiles);
         draw_path_open_closed();
-        draw_points(start_end, TILE_FINAL);
+        draw_tile_arr(start_end, TILE_POINT);
         await new Promise(resolve => setTimeout(resolve, SLEEP_TIME));
     }
     if (path_final.length > 0) {
         draw_path_final();
-        draw_points(start_end, TILE_FINAL);
+        draw_tile_arr(start_end, TILE_POINT);
     }
 }
 
