@@ -126,7 +126,7 @@ function default_start(tile_start, tile_end) {
 }
 
 function default_done() {
-	return path_final.length > 0;
+	return path_open.length === 0 || path_final.length > 0;
 }
 
 function pathfind_BFS(tile_start, tile_end) {
