@@ -33,13 +33,13 @@ const TILE_FINAL  = 6;
 const TILE_HOVER = 7;
 
 const TILE_COLORS = [
-	"blue",
-	"green",
-	"grey",
+	"#2222BB",
+	"#126612",
+	"#333333",
 	"red",
-	"#FFFF00",
 	"#AAAA00",
-	"white",
+	"#777700",
+	"#AA1111",
 	"purple",
 ];
 function tile_color(val) { return TILE_COLORS[val]; }
@@ -63,7 +63,8 @@ function tiles_load(world) {
 
 // pathfinding -----------------------------------------------------------------
 
-let tiles = tiles_load(world_test);
+const world_select = document.getElementById("select_world");
+let tiles = tiles_load(get_world_option(select_world.value));
 
 let path_open = [];
 let path_closed = Array(GRID_H).fill(0)
@@ -92,7 +93,12 @@ function visit_unclosed_neighbors(tile, tile_end) {
 		return false;
 	}
 	const [tx, ty] = tile.pos;
-	for (const [x, y] of [[tx-1,ty], [tx+1,ty], [tx,ty-1], [tx,ty+1]]) {
+	const maybe_neighs = []
+	if (tx > 0)      maybe_neighs.push([tx - 1, ty]);
+	if (tx < GRID_W) maybe_neighs.push([tx + 1, ty]);
+	if (ty > 0)      maybe_neighs.push([tx, ty - 1]);
+	if (tx < GRID_H) maybe_neighs.push([tx, ty + 1]);
+	for (const [x, y] of maybe_neighs) {
 		if (path_closed[y][x]) continue;
 		if (tiles[y][x] !== TILE_GROUND) continue;
 		if (visit(x, y)) return;
@@ -298,10 +304,15 @@ main()
 
 // DOM -------------------------------------------------------------------------
 
+function onchange_world(value) {
+	if (running) return;
+	tiles = tiles_load(get_world_option(value));
+	draw_running(tiles, start_end);
+	draw_hover(mouse_pos);
+}
+
 function onchange_algorithm(value) {
-	pathfind_func = str_to_algorithm(
-		document.getElementById("select_algorithm").value
-	);
+	pathfind_func = str_to_algorithm(value);
 }
 
 function get_mouse_pos(canvas, evt) {

@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+    <header>
+        <title>Pathfinding Visualization</title>
+        <link rel="stylesheet" href="style.css">
+<style>
+:root {
+    --dark: #090909;
+    --medium: #151515;
+    --green-dark: #126612;
+    --green-light: #33A633;
+}
+
+* {
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 0;
+}
+html {
+    background: var(--dark);
+    display: flex;
+    justify-content: center;
+}
+body {
+    background: var(--medium);
+    border-radius: 8px;
+    box-shadow: 0 0 4px 0 black;
+    margin: 16px;
+    padding: 24px;
+    width: fit-content;
+}
+body div {
+    color: var(--green-light);
+}
+
+canvas {
+    box-shadow: 0 0 6px 0 black;
+}
+
+#main > * {
+    margin-top: 24px;
+}
+#main > *:first-child {
+    margin-top: 0;
+}
+
+#heading hr {
+    color: var(--green-light);
+    margin-top: 8px;
+}
+
+#visualization {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#option_panel {
+    display: flex;
+    flex-direction: column;
+    margin: 16px;
+    margin-right: 0px;
+}
+#option_panel > div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+#option_panel h4 {
+    margin-right: 8px;
+}
+</style>
+    </header>
+    <body>
+        <div id="main">
+            <div id="heading">
+                <h1>Pathfinding Visualization</h1>
+                <hr />
+            </div>
+
+            <div id="visualization">
+                <canvas id="canvas">Browser does not support canvas.</canvas>
+                <div id="option_panel">
+                    <div>
+                        <h4>World:</h4>
+                        <select id="select_world" onchange="onchange_world(this.value)">
+                        </select>
+                    </div>
+                    <div>
+                        <h4>Algorithm:</h4>
+                        <select id="select_algorithm" onchange="onchange_algorithm(this.value)">
+                            <option>BFS</option>
+                            <option>DFS</option>
+                        </select>
+                    </div>
+                    <button onclick="onclick_run();">Run</button>
+                </div>
+            </div>
+
+            <div id="description">
+                <h2>Description</h2>
+            </div>
+        </div>
+        <script src="worlds.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
