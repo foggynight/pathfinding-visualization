@@ -92,10 +92,11 @@ function visit_unclosed_neighbors(tile, tile_end) {
 		return false;
 	}
 	const [tx, ty] = tile.pos;
-	if (tx > 0 && !path_closed[ty][tx-1])          { if (visit(tx - 1, ty)) return; }
-	if (tx < GRID_W - 1 && !path_closed[ty][tx+1]) { if (visit(tx + 1, ty)) return; }
-	if (ty > 0 && !path_closed[ty-1][tx])          { if (visit(tx, ty - 1)) return; }
-	if (ty < GRID_H - 1 && !path_closed[ty+1][tx]) { if (visit(tx, ty + 1)) return; }
+	for (const [x, y] of [[tx-1,ty], [tx+1,ty], [tx,ty-1], [tx,ty+1]]) {
+		if (path_closed[y][x]) continue;
+		if (tiles[y][x] !== TILE_GROUND) continue;
+		if (visit(x, y)) return;
+	}
 }
 
 function create_final_path(tile) {
