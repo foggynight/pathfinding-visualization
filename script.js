@@ -21,17 +21,15 @@ const canv_to_tile = (cx, cy) => [
 	Math.floor(cy * GRID_H / CANV_H),
 ];
 
-// grid ------------------------------------------------------------------------
+// tile ------------------------------------------------------------------------
 
 const TILE_WATER  = 0;
 const TILE_GROUND = 1;
 const TILE_WALL   = 2;
-
 const TILE_POINT  = 3;
 const TILE_OPEN   = 4;
 const TILE_CLOSED = 5;
 const TILE_FINAL  = 6;
-
 const TILE_HOVER = 7;
 
 const TILE_COLORS = [
@@ -46,25 +44,26 @@ const TILE_COLORS = [
 ];
 function tile_color(val) { return TILE_COLORS[val]; }
 
-function tiles_load() {
+function char_to_tile(char) {
+	return Number(char);
+}
+
+function tiles_load(world) {
     const tiles = Array(GRID_H).fill(0)
-        .map(t => Array(GRID_W).fill(TILE_WATER));
-    for (let y = 0; y < 10; ++y) {
-        for (let x = 0; x < 10; ++x) {
-            tiles[y][x] = TILE_GROUND;
-        }
-    }
-    for (let y = 0; y < 10; ++y) {
-        for (let x = 0; x < 10; ++x) {
-            tiles[y + 10][x] = TILE_WALL;
-        }
-    }
+        .map(t => Array(GRID_W).fill(0));
+	for (const wi in world) {
+		const chars = world[wi].split(/\s+|(.)/)
+			.filter(c => c !== undefined && c.length > 0);
+		for (const ci in chars) {
+			tiles[wi][ci] = char_to_tile(chars[ci]);
+		}
+	}
     return tiles;
 }
 
 // pathfinding -----------------------------------------------------------------
 
-let tiles = tiles_load();
+let tiles = tiles_load(world_test);
 
 let path_open = [];
 let path_closed = Array(GRID_H).fill(0)
