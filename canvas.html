@@ -6,7 +6,19 @@
     </header>
     <body>
         <h1>Pathfinding Visualization</h1>
-        <canvas id="canvas">Browser does not support canvas.</canvas>
+        <div style="display: flex;">
+            <canvas id="canvas">Browser does not support canvas.</canvas>
+            <div id="option_panel">
+                <div style="display: flex;">
+                    <h4>Algorithm:</h4>
+                    <select id="select_algorithm" onchange="onchange_algorithm(this.value)">
+                        <option>BFS</option>
+                        <option>DFS</option>
+                    </select>
+                </div>
+                <button onclick="onclick_run();">Run</button>
+            </div>
+        </div>
         <script src="script.js"></script>
     </body>
 </html>

@@ -13,7 +13,9 @@ const SLEEP_TIME = TARGET_FPS / 1000;
 const POINT_START = [24, 24];
 const POINT_END   = [36, 36];
 
-// Vec2 ------------------------------------------------------------------------
+// util ------------------------------------------------------------------------
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function Vec2_eq(v1, v2) { return (v1[0] == v2[0]) && (v1[1] == v2[1]); }
 
@@ -56,9 +58,9 @@ class Node {
 	}
 }
 
-const path_open = [];
-let path_closed;
-const path_final = [];
+let path_open = [];
+let path_closed = [];
+let path_final = [];
 
 function visit_unclosed_neighbors(tile, tile_end) {
 	function visit(x, y) {
@@ -207,29 +209,71 @@ function draw_path_final() {
 
 // main ------------------------------------------------------------------------
 
-const start_end = [POINT_START, POINT_END];
-
-async function main() {
-    const tiles = tiles_load();
-    draw_tiles(tiles)
-    draw_tile_arr(start_end, TILE_POINT);
-
-    const [start, step, done] = pathfind_BFS(POINT_START, POINT_END);
-
-    start();
-    draw_path_open_closed();
-    draw_tile_arr(start_end, TILE_POINT);
-    while (!done()) {
-        step();
-		draw_tiles(tiles);
-        draw_path_open_closed();
-        draw_tile_arr(start_end, TILE_POINT);
-        await new Promise(resolve => setTimeout(resolve, SLEEP_TIME));
-    }
-    if (path_final.length > 0) {
-        draw_path_final();
-        draw_tile_arr(start_end, TILE_POINT);
-    }
+function str_to_algorithm(str) {
+	switch (str) {
+		case "BFS": return pathfind_BFS;
+		case "DFS": return pathfind_DFS;
+		default:
+			console.log("ERROR: invalid algorithm option");
+			return null;
+	}
 }
 
-main()
+let pathfind_func = str_to_algorithm(
+	document.getElementById("select_algorithm").value
+)
+const start_end = [POINT_START, POINT_END];
+
+let running = false;
+let run_die = false;
+async function run() {
+	running = true;
+	const [start, step, done] = pathfind_func(POINT_START, POINT_END);
+
+	path_open = [];
+	path_closed = [];
+	path_final = [];
+
+	start();
+	draw_path_open_closed();
+	draw_tile_arr(start_end, TILE_POINT);
+
+	while (!run_die && !done()) {
+		step();
+		draw_tiles(tiles);
+		draw_path_open_closed();
+		draw_tile_arr(start_end, TILE_POINT);
+		await sleep(SLEEP_TIME);
+	}
+
+	if (path_final.length > 0) {
+		draw_path_final();
+		draw_tile_arr(start_end, TILE_POINT);
+	}
+
+	if (run_die) run_die = false;
+	running = false;
+}
+
+const tiles = tiles_load();
+draw_tiles(tiles)
+draw_tile_arr(start_end, TILE_POINT);
+
+// DOM -------------------------------------------------------------------------
+
+function onchange_algorithm(value) {
+	pathfind_func = str_to_algorithm(
+		document.getElementById("select_algorithm").value
+	)
+	console.log(pathfind_func);
+}
+
+function onclick_canvas() {
+
+}
+
+async function onclick_run() {
+	if (running) run_die = true;
+	while (run_die) await sleep(SLEEP_TIME);
+	run();
+}
