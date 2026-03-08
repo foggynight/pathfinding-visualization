@@ -97,7 +97,7 @@ function visit_unclosed_neighbors(tile, tile_end) {
 	if (tx > 0)      maybe_neighs.push([tx - 1, ty]);
 	if (tx < GRID_W) maybe_neighs.push([tx + 1, ty]);
 	if (ty > 0)      maybe_neighs.push([tx, ty - 1]);
-	if (tx < GRID_H) maybe_neighs.push([tx, ty + 1]);
+	if (ty < GRID_H) maybe_neighs.push([tx, ty + 1]);
 	for (const [x, y] of maybe_neighs) {
 		if (path_closed[y][x]) continue;
 		if (tiles[y][x] !== TILE_GROUND) continue;
@@ -209,11 +209,13 @@ function draw_tiles(tiles) {
     }
 }
 
-function draw_tile_arr(points, tile_val) {
-    points.forEach(point => draw_tile(point[0], point[1], tile_val));
+function draw_tile_arr(tile_arr, tile_val) {
+    tile_arr.forEach(tile => draw_tile(tile[0], tile[1], tile_val));
 }
 
 function draw_path_open_closed() {
+	if (path_open.length === 0 || path_closed.length === 0)
+		return;
 	for (let iy = 0; iy < GRID_H; ++iy) {
 		for (let ix = 0; ix < GRID_W; ++ix) {
 			if (path_closed[iy][ix]) {
@@ -235,6 +237,13 @@ function draw_path_final() {
 }
 
 function draw_running(tiles, start_end) {
+	draw_tiles(tiles);
+	draw_path_open_closed();
+	draw_path_final();
+	draw_tile_arr(start_end, TILE_POINT);
+}
+
+function draw_step(tiles, start_end) {
 	draw_tiles(tiles);
 	draw_path_open_closed();
 	draw_path_final();
@@ -266,21 +275,26 @@ let pathfind_func = str_to_algorithm(
 	document.getElementById("select_algorithm").value
 );
 
+// Pathfinding functions.
+let pf_start, pf_step, pf_done;
+
+let started = false;
 let running = false;
 let run_die = false;
-async function run() {
-	running = true;
-	const [start, step, done] = pathfind_func(point_start, point_end);
+
+async function button_run() {
+	[pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
 
 	path_open = [];
 	path_closed = [];
 	path_final = [];
 
-	start();
+	running = true;
+	pf_start();
 	draw_running(tiles, start_end);
 	draw_hover(mouse_pos);
-	while (!run_die && !done()) {
-		step();
+	while (!run_die && !pf_done()) {
+		pf_step();
 		draw_running(tiles, start_end);
 		draw_hover(mouse_pos);
 		await sleep(SLEEP_TIME);
@@ -293,6 +307,32 @@ async function run() {
 
 	if (run_die) run_die = false;
 	running = false;
+}
+
+function button_step() {
+	if (running) return;
+	if (!started) {
+		[pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
+		pf_start();
+		draw_step(tiles, start_end);
+		draw_hover(mouse_pos);
+		started = true;
+	} else {
+		if (pf_done()) return;
+		pf_step();
+		draw_step(tiles, start_end);
+		draw_hover(mouse_pos);
+	}
+}
+
+// TODO
+function button_reset() {
+	running = false;
+	run_die = false;
+
+	path_open = [];
+	path_closed = [];
+	path_final = [];
 }
 
 function main() {
@@ -345,5 +385,8 @@ canvas.addEventListener("click", onclick_canvas);
 async function onclick_run() {
 	if (running) run_die = true;
 	while (run_die) await sleep(8 * SLEEP_TIME);
-	run();
+	button_run();
 }
+
+function onclick_step() { button_step(); }
+function onclick_reset() { button_reset(); }

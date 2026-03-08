@@ -69,6 +69,10 @@ canvas {
 #option_panel h4 {
     margin-right: 8px;
 }
+
+#button_panel button {
+    width: 30%;
+}
 </style>
     </header>
     <body>
@@ -93,7 +97,11 @@ canvas {
                             <option>DFS</option>
                         </select>
                     </div>
-                    <button onclick="onclick_run();">Run</button>
+                    <div id="button_panel">
+                        <button onclick="onclick_run();">Run</button>
+                        <button onclick="onclick_step();">Step</button>
+                        <button onclick="onclick_reset();">Reset</button>
+                    </div>
                 </div>
             </div>
 
