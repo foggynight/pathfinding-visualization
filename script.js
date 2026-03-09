@@ -17,8 +17,8 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 function Vec2_eq(v1, v2) { return (v1[0] == v2[0]) && (v1[1] == v2[1]); }
 
 const canv_to_tile = (cx, cy) => [
-	Math.floor(cx * GRID_W / CANV_W),
-	Math.floor(cy * GRID_H / CANV_H),
+    Math.floor(cx * GRID_W / CANV_W),
+    Math.floor(cy * GRID_H / CANV_H),
 ];
 
 // tile ------------------------------------------------------------------------
@@ -33,31 +33,31 @@ const TILE_FINAL  = 6;
 const TILE_HOVER = 7;
 
 const TILE_COLORS = [
-	"#2222BB",
-	"#126612",
-	"#333333",
-	"red",
-	"#AAAA00",
-	"#777700",
-	"#AA1111",
-	"purple",
+    "#2222BB",
+    "#126612",
+    "#333333",
+    "red",
+    "#AAAA00",
+    "#777700",
+    "#AA1111",
+    "purple",
 ];
 function tile_color(val) { return TILE_COLORS[val]; }
 
 function char_to_tile(char) {
-	return Number(char);
+    return Number(char);
 }
 
 function tiles_load(world) {
     const tiles = Array(GRID_H).fill(0)
         .map(t => Array(GRID_W).fill(0));
-	for (const wi in world) {
-		const chars = world[wi].split(/\s+|(.)/)
-			.filter(c => c !== undefined && c.length > 0);
-		for (const ci in chars) {
-			tiles[wi][ci] = char_to_tile(chars[ci]);
-		}
-	}
+    for (const wi in world) {
+        const chars = world[wi].split(/\s+|(.)/)
+            .filter(c => c !== undefined && c.length > 0);
+        for (const ci in chars) {
+            tiles[wi][ci] = char_to_tile(chars[ci]);
+        }
+    }
     return tiles;
 }
 
@@ -68,95 +68,95 @@ let tiles = tiles_load(get_world_option(select_world.value));
 
 let path_open = [];
 let path_closed = Array(GRID_H).fill(0)
-	.map(_ => Array(GRID_W).fill(false));
+    .map(_ => Array(GRID_W).fill(false));
 let path_final = [];
 
 const point_start = [0, 0];
 const point_end   = [0, 0];
 
 class Node {
-	constructor(pos, parent = null) {
-		this.pos = pos;
-		this.parent = parent;
-	}
+    constructor(pos, parent = null) {
+        this.pos = pos;
+        this.parent = parent;
+    }
 }
 
 function visit_unclosed_neighbors(tile, tile_end) {
-	function visit(x, y) {
-		const node = new Node([x, y], tile);
-		path_open.push(node);
-		path_closed[y][x] = true;
-		if (Vec2_eq([x, y], tile_end)) {
-			create_final_path(node);
-			return true;
-		}
-		return false;
-	}
-	const [tx, ty] = tile.pos;
-	const maybe_neighs = []
-	if (tx > 0)      maybe_neighs.push([tx - 1, ty]);
-	if (tx < GRID_W) maybe_neighs.push([tx + 1, ty]);
-	if (ty > 0)      maybe_neighs.push([tx, ty - 1]);
-	if (ty < GRID_H) maybe_neighs.push([tx, ty + 1]);
-	for (const [x, y] of maybe_neighs) {
-		if (path_closed[y][x]) continue;
-		if (tiles[y][x] !== TILE_GROUND) continue;
-		if (visit(x, y)) return;
-	}
+    function visit(x, y) {
+        const node = new Node([x, y], tile);
+        path_open.push(node);
+        path_closed[y][x] = true;
+        if (Vec2_eq([x, y], tile_end)) {
+            create_final_path(node);
+            return true;
+        }
+        return false;
+    }
+    const [tx, ty] = tile.pos;
+    const maybe_neighs = []
+    if (tx > 0)      maybe_neighs.push([tx - 1, ty]);
+    if (tx < GRID_W) maybe_neighs.push([tx + 1, ty]);
+    if (ty > 0)      maybe_neighs.push([tx, ty - 1]);
+    if (ty < GRID_H) maybe_neighs.push([tx, ty + 1]);
+    for (const [x, y] of maybe_neighs) {
+        if (path_closed[y][x]) continue;
+        if (tiles[y][x] !== TILE_GROUND) continue;
+        if (visit(x, y)) return;
+    }
 }
 
 function create_final_path(tile) {
-	while (tile !== null) {
-		path_final.push(tile);
-		tile = tile.parent;
-	}
-	path_final.reverse();
+    while (tile !== null) {
+        path_final.push(tile);
+        tile = tile.parent;
+    }
+    path_final.reverse();
 }
 
 function default_start(tile_start, tile_end) {
-	return () => {
-		path_open.length = 0;
-		path_closed = Array(GRID_H).fill(0)
-			.map(_ => Array(GRID_W).fill(false));
-		path_final.length = 0;
+    return () => {
+        path_open.length = 0;
+        path_closed = Array(GRID_H).fill(0)
+            .map(_ => Array(GRID_W).fill(false));
+        path_final.length = 0;
 
-		if (Vec2_eq(tile_start, tile_end)) {
-			path_final.push(new Node(tile_start, null));
-			return;
-		}
+        if (Vec2_eq(tile_start, tile_end)) {
+            path_final.push(new Node(tile_start, null));
+            return;
+        }
 
-		path_open.push(new Node(tile_start, null));
-		const [ps_x, ps_y] = tile_start;
-		path_closed[ps_y][ps_x] = true;
-	}
+        path_open.push(new Node(tile_start, null));
+        const [ps_x, ps_y] = tile_start;
+        path_closed[ps_y][ps_x] = true;
+    }
 }
 
 function default_done() {
-	return path_open.length === 0 || path_final.length > 0;
+    return path_open.length === 0 || path_final.length > 0;
 }
 
 function pathfind_BFS(tile_start, tile_end) {
     function step() {
-		const head = path_open.shift();
-		visit_unclosed_neighbors(head, tile_end);
+        const head = path_open.shift();
+        visit_unclosed_neighbors(head, tile_end);
     }
     return [
-		default_start(tile_start, tile_end),
-		step,
-		default_done,
-	];
+        default_start(tile_start, tile_end),
+        step,
+        default_done,
+    ];
 }
 
 function pathfind_DFS(tile_start, tile_end) {
     function step() {
-		const head = path_open.pop();
-		visit_unclosed_neighbors(head, tile_end);
+        const head = path_open.pop();
+        visit_unclosed_neighbors(head, tile_end);
     }
     return [
-		default_start(tile_start, tile_end),
-		step,
-		default_done,
-	];
+        default_start(tile_start, tile_end),
+        step,
+        default_done,
+    ];
 }
 
 // draw ------------------------------------------------------------------------
@@ -196,7 +196,7 @@ function draw_grid(color) {
 }
 
 function draw_tile(ix, iy, tile_val) {
-	const color = tile_color(tile_val);
+    const color = tile_color(tile_val);
     const [x, y] = [ix * CELL_W, iy * CELL_H];
     draw_rect(x, y, CELL_W, CELL_H, color);
 }
@@ -214,46 +214,46 @@ function draw_tile_arr(tile_arr, tile_val) {
 }
 
 function draw_path_open_closed() {
-	if (path_open.length === 0 || path_closed.length === 0)
-		return;
-	for (let iy = 0; iy < GRID_H; ++iy) {
-		for (let ix = 0; ix < GRID_W; ++ix) {
-			if (path_closed[iy][ix]) {
-				draw_tile(ix, iy, TILE_CLOSED);
-			}
-		}
-	}
-	path_open.forEach(tile => {
-		const [x, y] = tile.pos;
-		draw_tile(x, y, TILE_OPEN);
-	});
+    if (path_open.length === 0 || path_closed.length === 0)
+        return;
+    for (let iy = 0; iy < GRID_H; ++iy) {
+        for (let ix = 0; ix < GRID_W; ++ix) {
+            if (path_closed[iy][ix]) {
+                draw_tile(ix, iy, TILE_CLOSED);
+            }
+        }
+    }
+    path_open.forEach(tile => {
+        const [x, y] = tile.pos;
+        draw_tile(x, y, TILE_OPEN);
+    });
 }
 
 function draw_path_final() {
-	path_final.forEach(tile => {
-		const [x, y] = tile.pos;
-		draw_tile(x, y, TILE_FINAL);
-	});
+    path_final.forEach(tile => {
+        const [x, y] = tile.pos;
+        draw_tile(x, y, TILE_FINAL);
+    });
 }
 
 function draw_running(tiles, start_end) {
-	draw_tiles(tiles);
-	draw_path_open_closed();
-	draw_path_final();
-	draw_tile_arr(start_end, TILE_POINT);
+    draw_tiles(tiles);
+    draw_path_open_closed();
+    draw_path_final();
+    draw_tile_arr(start_end, TILE_POINT);
 }
 
 function draw_step(tiles, start_end) {
-	draw_tiles(tiles);
-	draw_path_open_closed();
-	draw_path_final();
-	draw_tile_arr(start_end, TILE_POINT);
+    draw_tiles(tiles);
+    draw_path_open_closed();
+    draw_path_final();
+    draw_tile_arr(start_end, TILE_POINT);
 }
 
 function draw_hover(canvas_pos) {
-	if (!mouse_in_canv) return;
-	const [tx, ty] = canv_to_tile(...canvas_pos);
-	draw_tile(tx, ty, TILE_HOVER);
+    if (!mouse_in_canv) return;
+    const [tx, ty] = canv_to_tile(...canvas_pos);
+    draw_tile(tx, ty, TILE_HOVER);
 }
 
 // main ------------------------------------------------------------------------
@@ -262,17 +262,17 @@ const start_end = [point_start, point_end];
 let mouse_pos = [CANV_W / 2, CANV_H / 2];
 
 function str_to_algorithm(str) {
-	switch (str) {
-		case "BFS": return pathfind_BFS;
-		case "DFS": return pathfind_DFS;
-		default:
-			console.log("ERROR: invalid algorithm option");
-			return null;
-	}
+    switch (str) {
+        case "BFS": return pathfind_BFS;
+        case "DFS": return pathfind_DFS;
+        default:
+            console.log("ERROR: invalid algorithm option");
+            return null;
+    }
 }
 
 let pathfind_func = str_to_algorithm(
-	document.getElementById("select_algorithm").value
+    document.getElementById("select_algorithm").value
 );
 
 // Pathfinding functions.
@@ -283,110 +283,110 @@ let running = false;
 let run_die = false;
 
 async function button_run() {
-	[pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
+    [pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
 
-	path_open = [];
-	path_closed = [];
-	path_final = [];
+    path_open = [];
+    path_closed = [];
+    path_final = [];
 
-	running = true;
-	pf_start();
-	draw_running(tiles, start_end);
-	draw_hover(mouse_pos);
-	while (!run_die && !pf_done()) {
-		pf_step();
-		draw_running(tiles, start_end);
-		draw_hover(mouse_pos);
-		await sleep(SLEEP_TIME);
-	}
+    running = true;
+    pf_start();
+    draw_running(tiles, start_end);
+    draw_hover(mouse_pos);
+    while (!run_die && !pf_done()) {
+        pf_step();
+        draw_running(tiles, start_end);
+        draw_hover(mouse_pos);
+        await sleep(SLEEP_TIME);
+    }
 
-	if (path_final.length > 0) {
-		draw_running(tiles, start_end);
-		draw_hover(mouse_pos);
-	}
+    if (path_final.length > 0) {
+        draw_running(tiles, start_end);
+        draw_hover(mouse_pos);
+    }
 
-	if (run_die) run_die = false;
-	running = false;
+    if (run_die) run_die = false;
+    running = false;
 }
 
 function button_step() {
-	if (running) return;
-	if (!started) {
-		[pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
-		pf_start();
-		draw_step(tiles, start_end);
-		draw_hover(mouse_pos);
-		started = true;
-	} else {
-		if (pf_done()) return;
-		pf_step();
-		draw_step(tiles, start_end);
-		draw_hover(mouse_pos);
-	}
+    if (running) return;
+    if (!started) {
+        [pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
+        pf_start();
+        draw_step(tiles, start_end);
+        draw_hover(mouse_pos);
+        started = true;
+    } else {
+        if (pf_done()) return;
+        pf_step();
+        draw_step(tiles, start_end);
+        draw_hover(mouse_pos);
+    }
 }
 
 // TODO
 function button_reset() {
-	running = false;
-	run_die = false;
+    running = false;
+    run_die = false;
 
-	path_open = [];
-	path_closed = [];
-	path_final = [];
+    path_open = [];
+    path_closed = [];
+    path_final = [];
 }
 
 function main() {
-	draw_tiles(tiles);
-	draw_tile_arr(start_end, TILE_POINT);
-	draw_hover(mouse_pos);
+    draw_tiles(tiles);
+    draw_tile_arr(start_end, TILE_POINT);
+    draw_hover(mouse_pos);
 }
 main()
 
 // DOM -------------------------------------------------------------------------
 
 function onchange_world(value) {
-	if (running) return;
-	tiles = tiles_load(get_world_option(value));
-	draw_running(tiles, start_end);
-	draw_hover(mouse_pos);
+    if (running) return;
+    tiles = tiles_load(get_world_option(value));
+    draw_running(tiles, start_end);
+    draw_hover(mouse_pos);
 }
 
 function onchange_algorithm(value) {
-	pathfind_func = str_to_algorithm(value);
+    pathfind_func = str_to_algorithm(value);
 }
 
 function get_mouse_pos(canvas, evt) {
-	const rect = canvas.getBoundingClientRect();
-	return [evt.clientX - rect.left, evt.clientY - rect.top];
+    const rect = canvas.getBoundingClientRect();
+    return [evt.clientX - rect.left, evt.clientY - rect.top];
 }
 canvas.addEventListener("mousemove", evt => {
-	mouse_pos = get_mouse_pos(canvas, evt);
-	draw_running(tiles, start_end);
-	draw_hover(mouse_pos);
+    mouse_pos = get_mouse_pos(canvas, evt);
+    draw_running(tiles, start_end);
+    draw_hover(mouse_pos);
 });
 canvas.addEventListener("mouseenter", _ => { mouse_in_canv = true; });
 canvas.addEventListener("mouseleave", _ => { mouse_in_canv = false; });
 
 let click_toggle = false;
 function onclick_canvas(_) {
-	if (running) return;
-	const [mtx, mty] = canv_to_tile(...mouse_pos);
-	if (!click_toggle) {
-		point_start[0] = mtx;
-		point_start[1] = mty;
-	}
-  point_end[0] = mtx;
-  point_end[1] = mty;
-	click_toggle = !click_toggle;
-	draw_running(tiles, start_end);
-	draw_hover(mouse_pos);
+    if (running) return;
+    const [mtx, mty] = canv_to_tile(...mouse_pos);
+    if (!click_toggle) {
+        point_start[0] = mtx;
+        point_start[1] = mty;
+    }
+    point_end[0] = mtx;
+    point_end[1] = mty;
+    click_toggle = !click_toggle;
+    draw_running(tiles, start_end);
+    draw_hover(mouse_pos);
 }
 canvas.addEventListener("click", onclick_canvas);
 
 async function onclick_run() {
-	if (running) run_die = true;
-	while (run_die) await sleep(8 * SLEEP_TIME);
-	button_run();
+    if (running) run_die = true;
+    while (run_die) await sleep(8 * SLEEP_TIME);
+    button_run();
 }
 
 function onclick_step() { button_step(); }
