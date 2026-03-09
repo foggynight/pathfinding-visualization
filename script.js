@@ -14,7 +14,7 @@ const SLEEP_TIME = TARGET_FPS / 1000;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-function Vec2_eq(v1, v2) { return (v1[0] == v2[0]) && (v1[1] == v2[1]); }
+function Vec2_eq(v1, v2) { return (v1[0] === v2[0]) && (v1[1] === v2[1]); }
 
 const canv_to_tile = (cx, cy) => [
     Math.floor(cx * GRID_W / CANV_W),
