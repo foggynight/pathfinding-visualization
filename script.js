@@ -271,7 +271,7 @@ function str_to_algorithm(str) {
     }
 }
 
-let pathfind_func = str_to_algorithm(
+let pathfind_funcs = str_to_algorithm(
     document.getElementById("select_algorithm").value
 );
 
@@ -283,7 +283,7 @@ let running = false;
 let run_die = false;
 
 async function button_run() {
-    [pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
+    [pf_start, pf_step, pf_done] = pathfind_funcs(point_start, point_end);
 
     path_open = [];
     path_closed = [];
@@ -312,7 +312,7 @@ async function button_run() {
 function button_step() {
     if (running) return;
     if (!started) {
-        [pf_start, pf_step, pf_done] = pathfind_func(point_start, point_end);
+        [pf_start, pf_step, pf_done] = pathfind_funcs(point_start, point_end);
         pf_start();
         draw_step(tiles, start_end);
         draw_hover(mouse_pos);
@@ -352,7 +352,7 @@ function onchange_world(value) {
 }
 
 function onchange_algorithm(value) {
-    pathfind_func = str_to_algorithm(value);
+    pathfind_funcs = str_to_algorithm(value);
 }
 
 function get_mouse_pos(canvas, evt) {
