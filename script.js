@@ -374,11 +374,12 @@ function onclick_canvas(_) {
 	if (!click_toggle) {
 		point_start[0] = mtx;
 		point_start[1] = mty;
-	} else {
-		point_end[0] = mtx;
-		point_end[1] = mty;
 	}
+  point_end[0] = mtx;
+  point_end[1] = mty;
 	click_toggle = !click_toggle;
+	draw_running(tiles, start_end);
+	draw_hover(mouse_pos);
 }
 canvas.addEventListener("click", onclick_canvas);
 
